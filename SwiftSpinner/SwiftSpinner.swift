@@ -7,9 +7,23 @@
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
+#if os(OSX)
+import Cocoa
+import Quartz
+public typealias View = NSView
+public typealias Label = NSTextField
+public typealias BezierPath = NSBezierPath
+public typealias Color = NSColor
+public typealias Font = NSFont
+#else
 import UIKit
-
-public class SwiftSpinner: UIView {
+public typealias View = UIView
+public typealias Label = UILabel
+public typealias BezierPath = UIBezierPath
+public typealias Color = UIColor
+public typealias Font = UIFont
+#endif
+public class SwiftSpinner: View {
     fileprivate static let standardAnimationDuration = 0.33
 
    // MARK: - Singleton
@@ -29,12 +43,17 @@ public class SwiftSpinner: UIView {
 
         super.init(frame: frame)
 
-        blurEffect = UIBlurEffect(style: blurEffectStyle)
-        blurView = UIVisualEffectView()
         addSubview(blurView)
 
+        #if os(OSX)
+        
+        #else
+        
         vibrancyView = UIVisualEffectView(effect: UIVibrancyEffect(blurEffect: blurEffect))
+        #endif
+        
         addSubview(vibrancyView)
+        
 
         let titleScale: CGFloat = 0.85
         titleLabel.frame.size = CGSize(width: frameSize.width * titleScale, height: frameSize.height * titleScale)
@@ -43,21 +62,21 @@ public class SwiftSpinner: UIView {
         titleLabel.textAlignment = .center
         titleLabel.lineBreakMode = .byWordWrapping
         titleLabel.adjustsFontSizeToFitWidth = true
-        titleLabel.textColor = UIColor.white
+        titleLabel.textColor = Color.white
 
         blurView.contentView.addSubview(titleLabel)
         blurView.contentView.addSubview(vibrancyView)
 
         outerCircleView.frame.size = frameSize
 
-        outerCircle.path = UIBezierPath(ovalIn: CGRect(x: 0.0, y: 0.0, width: frameSize.width, height: frameSize.height)).cgPath
+        outerCircle.path = BezierPath(ovalIn: CGRect(x: 0.0, y: 0.0, width: frameSize.width, height: frameSize.height)).cgPath
         outerCircle.lineWidth = 8.0
         outerCircle.strokeStart = 0.0
         outerCircle.strokeEnd = 0.45
         outerCircle.lineCap = .round
-        outerCircle.fillColor = UIColor.clear.cgColor
+        outerCircle.fillColor = Color.clear.cgColor
         outerCircle.strokeColor = outerCircleDefaultColor
-        outerCircleView.layer.addSublayer(outerCircle)
+        outerCircleView.piLayer.addSublayer(outerCircle)
 
         outerCircle.strokeStart = 0.0
         outerCircle.strokeEnd = 1.0
@@ -67,40 +86,44 @@ public class SwiftSpinner: UIView {
         innerCircleView.frame.size = frameSize
 
         let innerCirclePadding: CGFloat = 12
-        innerCircle.path = UIBezierPath(ovalIn: CGRect(x: innerCirclePadding, y: innerCirclePadding, width: frameSize.width - 2*innerCirclePadding, height: frameSize.height - 2*innerCirclePadding)).cgPath
+        innerCircle.path = BezierPath(ovalIn: CGRect(x: innerCirclePadding, y: innerCirclePadding, width: frameSize.width - 2*innerCirclePadding, height: frameSize.height - 2*innerCirclePadding)).cgPath
         innerCircle.lineWidth = 4.0
         innerCircle.strokeStart = 0.5
         innerCircle.strokeEnd = 0.9
         innerCircle.lineCap = .round
-        innerCircle.fillColor = UIColor.clear.cgColor
+        innerCircle.fillColor = Color.clear.cgColor
         innerCircle.strokeColor = innerCircleDefaultColor
-        innerCircleView.layer.addSublayer(innerCircle)
+        innerCircleView.piLayer.addSublayer(innerCircle)
 
         innerCircle.strokeStart = 0.0
         innerCircle.strokeEnd = 1.0
 
         blurView.contentView.addSubview(innerCircleView)
 
+        #if !os(OSX)
         isUserInteractionEnabled = true
+        #endif
     }
 
-    public override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+    #if !os(OSX)
+    public override func hitTest(_ point: CGPoint, with event: UIEvent?) -> View? {
         return self
     }
+    #endif
 
     // MARK: - Public interface
 
     /// The label with the spinner's title
-    public lazy var titleLabel = UILabel()
+    public lazy var titleLabel = Label()
 
     /// The label with the spinner's subtitle
-    public var subtitleLabel: UILabel?
+    public var subtitleLabel: Label?
 
-    private let outerCircleDefaultColor = UIColor.white.cgColor
-    fileprivate var _outerColor: UIColor?
+    private let outerCircleDefaultColor = Color.white.cgColor
+    fileprivate var _outerColor: Color?
 
     /// The color of the outer circle
-    public var outerColor: UIColor? {
+    public var outerColor: Color? {
         get { return _outerColor }
         set(newColor) {
             _outerColor = newColor
@@ -108,11 +131,11 @@ public class SwiftSpinner: UIView {
         }
     }
 
-    private let innerCircleDefaultColor = UIColor.gray.cgColor
-    fileprivate var _innerColor: UIColor?
+    private let innerCircleDefaultColor = Color.gray.cgColor
+    fileprivate var _innerColor: Color?
 
     /// The color of the inner circle
-    public var innerColor: UIColor? {
+    public var innerColor: Color? {
         get { return _innerColor }
         set(newColor) {
             _innerColor = newColor
@@ -121,9 +144,9 @@ public class SwiftSpinner: UIView {
     }
 
     /// Custom superview for the spinner
-    private static weak var customSuperview: UIView?
-    private static func containerView() -> UIView? {
-        #if EXTENSION
+    private static weak var customSuperview: View?
+    private static func containerView() -> View? {
+        #if EXTENSION || os(OSX)
             return customSuperview
         #else
             return customSuperview ?? UIApplication.shared.keyWindow
@@ -131,7 +154,7 @@ public class SwiftSpinner: UIView {
     }
 
     /// Custom container for the spinner
-    public class func useContainerView(_ sv: UIView?) {
+    public class func useContainerView(_ sv: View?) {
         customSuperview = sv
     }
 
@@ -157,7 +180,7 @@ public class SwiftSpinner: UIView {
             spinner.blurView.contentView.alpha = 0
 
             guard let containerView = containerView() else {
-                #if EXTENSION
+                #if EXTENSION || os(OSX)
                     fatalError("\n`containerView` is `nil`. `UIApplication.keyWindow` is not available in extensions and so, a containerView is required. Use `useContainerView` to set a view where the spinner should show")
                 #else
                     fatalError("\n`UIApplication.keyWindow` is `nil`. If you're trying to show a spinner from your view controller's `viewDidLoad` method, do that from `viewWillAppear` instead. Alternatively use `useContainerView` to set a view where the spinner should show")
@@ -165,12 +188,23 @@ public class SwiftSpinner: UIView {
             }
 
             containerView.addSubview(spinner)
-
-            UIView.animate(withDuration: SwiftSpinner.standardAnimationDuration, delay: 0.0, options: .curveEaseOut, animations: {
+            
+            #if os(OSX)
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = SwiftSpinner.standardAnimationDuration
+                context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                
+                let contentView = spinner.blurView.contentView.animator()
+                
+                contentView.alpha = 1
+            }
+            #else
+            View.animate(withDuration: SwiftSpinner.standardAnimationDuration, delay: 0.0, options: .curveEaseOut, animations: {
                 spinner.blurView.contentView.alpha = 1
                 spinner.blurView.effect = showBlurBackground ? spinner.blurEffect : .none
             }, completion: nil)
-
+            #endif
+            
             #if os(iOS)
                 // Orientation change observer
                 NotificationCenter.default.addObserver(
@@ -265,7 +299,24 @@ public class SwiftSpinner: UIView {
                 return
             }
 
-            UIView.animate(withDuration: SwiftSpinner.standardAnimationDuration, delay: 0.0, options: .curveEaseOut, animations: {
+            #if os(OSX)
+            
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = SwiftSpinner.standardAnimationDuration
+                context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                
+                let contentView = spinner.blurView.contentView.animator()
+                contentView.alpha = 0
+            }, completionHandler: {
+                spinner.blurView.contentView.alpha = 1
+                spinner.removeFromSuperview()
+                spinner.titleLabel.text = nil
+                spinner.dismissing = false
+                
+                completion?()
+            })
+            #else
+            View.animate(withDuration: SwiftSpinner.standardAnimationDuration, delay: 0.0, options: .curveEaseOut, animations: {
                 spinner.blurView.contentView.alpha = 0
                 spinner.blurView.effect = nil
             }, completion: {_ in
@@ -276,6 +327,7 @@ public class SwiftSpinner: UIView {
 
                 completion?()
             })
+            #endif
 
             spinner.animating = false
         })
@@ -284,7 +336,7 @@ public class SwiftSpinner: UIView {
     /// Set the default title font
     ///
     /// - Parameter font: The title font
-    public class func setTitleFont(_ font: UIFont?) {
+    public class func setTitleFont(_ font: Font?) {
         let spinner = SwiftSpinner.shared
 
         spinner.currentTitleFont = font ?? spinner.defaultTitleFont
@@ -294,7 +346,7 @@ public class SwiftSpinner: UIView {
     /// Set the default title color
     ///
     /// - Parameter color: The title color
-    public class func setTitleColor(_ color: UIColor?) {
+    public class func setTitleColor(_ color: Color?) {
         let spinner = SwiftSpinner.shared
 
         spinner.titleLabel.textColor = color ?? spinner.defaultTitleColor
@@ -305,23 +357,42 @@ public class SwiftSpinner: UIView {
         didSet {
             let spinner = SwiftSpinner.shared
 
+            #if os(OSX)
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = SwiftSpinner.standardAnimationDuration
+                context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                
+                let titleLabel = spinner.titleLabel.animator()
+                titleLabel.transform = CGAffineTransform(scaleX: 0.75, y: 0.75)
+                titleLabel.alpha = 0.2
+            }, completionHandler: {
+                spinner.titleLabel.text = self.title
+                NSAnimationContext.runAnimationGroup({ context in
+                    context.duration = 0.35
+                    
+                    let titleLabel = spinner.titleLabel.animator()
+                    titleLabel.transform = CGAffineTransform.identity
+                    titleLabel.alpha = 1.0
+                })
+            })
+            #else
             guard spinner.animating else {
                 spinner.titleLabel.transform = CGAffineTransform.identity
                 spinner.titleLabel.alpha = 1.0
                 spinner.titleLabel.text = self.title
                 return
             }
-
-            UIView.animate(withDuration: 0.15, delay: 0.0, options: .curveEaseOut, animations: {
+            View.animate(withDuration: 0.15, delay: 0.0, options: .curveEaseOut, animations: {
                 spinner.titleLabel.transform = CGAffineTransform(scaleX: 0.75, y: 0.75)
                 spinner.titleLabel.alpha = 0.2
                 }, completion: { _ in
                     spinner.titleLabel.text = self.title
-                    UIView.animate(withDuration: 0.35, delay: 0.0, usingSpringWithDamping: 0.35, initialSpringVelocity: 0.0, options: [], animations: {
+                    View.animate(withDuration: 0.35, delay: 0.0, usingSpringWithDamping: 0.35, initialSpringVelocity: 0.0, options: [], animations: {
                         spinner.titleLabel.transform = CGAffineTransform.identity
                         spinner.titleLabel.alpha = 1.0
                         }, completion: nil)
             })
+            #endif
         }
     }
 
@@ -378,11 +449,11 @@ public class SwiftSpinner: UIView {
         tapHandler = tap
 
         if subtitleText != nil {
-            subtitleLabel = UILabel()
+            subtitleLabel = Label()
             if let subtitle = subtitleLabel {
                 subtitle.text = subtitleText
-                subtitle.font = UIFont(name: self.currentTitleFont.familyName, size: currentTitleFont.pointSize * 0.8)
-                subtitle.textColor = UIColor.white
+                subtitle.font = Font(name: self.currentTitleFont.piFamilyName, size: currentTitleFont.pointSize * 0.8)
+                subtitle.textColor = Color.white
                 subtitle.numberOfLines = 0
                 subtitle.textAlignment = .center
                 subtitle.lineBreakMode = .byWordWrapping
@@ -392,6 +463,15 @@ public class SwiftSpinner: UIView {
         }
     }
 
+    #if os(OSX)
+    public override func touchesBegan(with event: NSEvent) {
+        super.touchesBegan(with: event)
+        if tapHandler != nil {
+            tapHandler?()
+            tapHandler = nil
+        }
+    }
+    #else
     public override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesBegan(touches, with: event)
 
@@ -400,6 +480,7 @@ public class SwiftSpinner: UIView {
             tapHandler = nil
         }
     }
+    #endif
 
     /// Remove the tap handler
     public func clearTapHandler() {
@@ -414,20 +495,25 @@ public class SwiftSpinner: UIView {
     // Layout elements
     //
 
+    #if os(OSX)
+    private var blurView = NSVisualEffectView()
+    private var vibrancyView = NSVisualEffectView()
+    #else
     private var blurEffectStyle: UIBlurEffect.Style = .dark
-    private var blurEffect: UIBlurEffect!
-    private var blurView: UIVisualEffectView!
-    private var vibrancyView: UIVisualEffectView!
+    private var blurEffect = UIBlurEffect()
+    private var blurView = UIVisualEffectView()
+    private var vibrancyView = UIVisualEffectView()
+    #endif
+    
+    private let defaultTitleFont = Font(name: "HelveticaNeue", size: 22.0)!
+    private var currentTitleFont: Font
 
-    private let defaultTitleFont = UIFont(name: "HelveticaNeue", size: 22.0)!
-    private var currentTitleFont: UIFont
-
-    private var defaultTitleColor = UIColor.white
+    private var defaultTitleColor = Color.white
 
     let frameSize = CGSize(width: 200.0, height: 200.0)
 
-    private lazy var outerCircleView = UIView()
-    private lazy var innerCircleView = UIView()
+    private lazy var outerCircleView = View()
+    private lazy var innerCircleView = View()
 
     private let outerCircle = CAShapeLayer()
     private let innerCircle = CAShapeLayer()
@@ -450,7 +536,10 @@ public class SwiftSpinner: UIView {
         let randomRotation = Double(Float(arc4random()) /  Float(UInt32.max)) * (Double.pi / 4) + (Double.pi / 4)
 
         //outer circle
-        UIView.animate(withDuration: duration, delay: 0.0, usingSpringWithDamping: 0.4, initialSpringVelocity: 0.0, options: [], animations: {
+        #if os(OSX)
+        
+        #else
+        View.animate(withDuration: duration, delay: 0.0, usingSpringWithDamping: 0.4, initialSpringVelocity: 0.0, options: [], animations: {
             self.currentOuterRotation -= CGFloat(randomRotation)
             self.outerCircleView.transform = CGAffineTransform(rotationAngle: self.currentOuterRotation)
             }, completion: {_ in
@@ -461,6 +550,7 @@ public class SwiftSpinner: UIView {
                     }
                 })
         })
+        #endif
     }
 
     private func spinInner() {
@@ -469,7 +559,10 @@ public class SwiftSpinner: UIView {
         }
 
         //inner circle
-        UIView.animate(withDuration: 0.5, delay: 0.0, usingSpringWithDamping: 0.5, initialSpringVelocity: 0.0, options: [], animations: {
+        #if os(OSX)
+        
+        #else
+        View.animate(withDuration: 0.5, delay: 0.0, usingSpringWithDamping: 0.5, initialSpringVelocity: 0.0, options: [], animations: {
             self.currentInnerRotation += CGFloat(Double.pi / 4)
             self.innerCircleView.transform = CGAffineTransform(rotationAngle: self.currentInnerRotation)
             }, completion: { _ in
@@ -479,6 +572,7 @@ public class SwiftSpinner: UIView {
                     }
                 })
         })
+        #endif
     }
 
     @objc public func updateFrame() {
@@ -502,21 +596,151 @@ public class SwiftSpinner: UIView {
         if let subtitle = subtitleLabel {
             subtitle.bounds.size = subtitle.sizeThatFits(bounds.insetBy(dx: 20.0, dy: 0.0).size)
             var safeArea: CGFloat = 0
+            #if !os(OSX)
             if #available(iOS 11.0, tvOS 11.0, *) {
                 safeArea = superview?.safeAreaInsets.bottom ?? 0
             }
-            subtitle.center = CGPoint(x: bounds.midX, y: bounds.maxY - subtitle.bounds.midY - subtitle.font.pointSize - safeArea)
+            #endif
+            subtitle.center = CGPoint(x: bounds.midX, y: bounds.maxY - subtitle.bounds.midY - subtitle.piFont.pointSize - safeArea)
         }
     }
-
+    
+    #if os(OSX)
+    public override func layout() {
+        super.layout()
+        updateFrame()
+    }
+    #else
     override public func layoutSubviews() {
         super.layoutSubviews()
         updateFrame()
     }
-
+    #endif
+    
     // MARK: - Tap handler
     private var tapHandler: (() -> Void)?
     func didTapSpinner() {
         tapHandler?()
     }
 }
+
+
+#if os(OSX)
+extension NSView {
+    var center: CGPoint {
+        get { return CGPoint(x: frame.midX, y: frame.midY) }
+        set {
+            frame.origin = CGPoint(
+                x: newValue.x - frame.width / 2,
+                y: newValue.y - frame.height / 2
+            )
+        }
+    }
+    
+    var isUserInteractionEnabled: Bool {
+        get { return true }
+        set { }
+    }
+    
+    var piLayer: CALayer {
+        self.wantsLayer = true
+        return self.layer!
+    }
+    
+    var transform: CGAffineTransform {
+        get { return piLayer.affineTransform() }
+        set { piLayer.setAffineTransform(newValue) }
+    }
+    
+    var alpha: CGFloat {
+        get { return alphaValue }
+        set { alphaValue = newValue }
+    }
+    
+    class func animate(withDuration: TimeInterval, delay: TimeInterval, options: NSAnimation.Curve, animations: ()->(), completion: (()->())?) {
+        
+    }
+    
+    func bringSubviewToFront(_ view: NSView) {
+        view.removeFromSuperview()
+        addSubview(view, positioned: .above, relativeTo: nil)
+    }
+}
+extension NSTextField {
+    var piFont: Font {
+        return self.font ?? Font.labelFont(ofSize: Font.labelFontSize)
+    }
+    
+    var numberOfLines: Int {
+        get { return maximumNumberOfLines }
+        set { maximumNumberOfLines = newValue }
+    }
+    
+    var textAlignment: NSTextAlignment {
+        get { return alignment }
+        set { alignment = newValue }
+    }
+    
+    var text: String? {
+        get { return stringValue }
+        set { stringValue = newValue ?? "" }
+    }
+    
+    var adjustsFontSizeToFitWidth: Bool {
+        get { return true }
+        set { }
+    }
+}
+extension NSBezierPath {
+    
+    public var cgPath: CGPath {
+        let path = CGMutablePath()
+        var points = [CGPoint](repeating: .zero, count: 3)
+        
+        for i in 0 ..< self.elementCount {
+            let type = self.element(at: i, associatedPoints: &points)
+            switch type {
+            case .moveTo:
+                path.move(to: points[0])
+            case .lineTo:
+                path.addLine(to: points[0])
+            case .curveTo:
+                path.addCurve(to: points[2], control1: points[0], control2: points[1])
+            case .closePath:
+                path.closeSubpath()
+            @unknown default:
+                fatalError()
+            }
+        }
+        
+        return path
+    }
+}
+
+extension NSVisualEffectView {
+    var contentView: NSView {
+        return self
+    }
+}
+extension Font {
+    var piFamilyName: String {
+        get { return familyName ?? "Arial" }
+    }
+}
+#else
+extension UILabel {
+    var piFont: Font {
+        return font
+    }
+}
+extension Font {
+    var piFamilyName: String {
+        get { return familyName }
+    }
+}
+extension UIView {
+    var piLayer: CALayer {
+        return layer
+    }
+}
+#endif
